@@ -1,0 +1,92 @@
+<html>
+  <head>
+    <title>List of Contents</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th, td {
+        border: 1px solid #dddddd;
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+      td a + i {
+        padding-left: 2em;
+        } 
+      .true-content {
+        background-color: rgb(0, 255, 0);
+      }
+      .false-content {
+        background-color: rgb(250, 228, 65);
+      }
+      .lock-icon {
+        cursor: pointer;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <table>
+      <tr>
+        <th>No.</th>
+        <th>Name</th>
+        <th>Accuracy</th>
+        <th>Difficulty</th>
+        <th>Frequency</th>
+        <th>Status &nbsp; <i class="fa fa-refresh" onclick="changeAllBackgroundColor()"></i></th>
+      </tr>
+      {% for content in contents %}
+      <tr">
+        <td>{{ content[0] }}</td>
+        <td><a href="{{ content[5] }}" target="_blank">{{ content[1] }}</a></td>
+        <td>{{ content[2] }}</td>
+        <td>{{ content[3] }}</td>
+        <td>{{ content[4] }}</td>
+        <td><i class="lock-icon fa fa-lock"></i> <i class="fa fa-refresh" onclick="changeBackgroundColor(this)"></i></td>
+      </tr>
+      {% endfor %}
+    </table>
+    <script>
+        function changeAllBackgroundColor (){
+            let refreshIcons = document.querySelectorAll(".fa-refresh");
+            for (let i = 1; i < refreshIcons.length; i++) {
+                let icon = refreshIcons[i];
+                changeBackgroundColor(icon);
+            }
+        }
+        function changeBackgroundColor(element) {
+            var questionId = element.parentNode.parentNode.firstChild.textContent;
+            questionId = parseInt(questionId)
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", "{{ url_for('get_problem_detail', questionId=questionId) }}" + questionId, true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    var response = JSON.parse(xhr.responseText);
+                    if(response['status'] === 'ac') {
+                        element.parentNode.parentNode.classList.toggle("true-content");
+                    } else {
+                        element.parentNode.parentNode.classList.toggle("false-content");
+                    }
+                    if(response['paidOnly'] === true) {
+                        var lockIcon = element.parentNode.getElementsByClassName("lock-icon")[0];
+                        lockIcon.style.display = "inline";
+                        var link = document.createElement("a");
+                        var title = response['title']
+                        title = title.replace(/\s/g, '+');
+                        link.href = 'https://google.com/search?q=' + title + '+lintcode';
+                        link.target = "_blank";
+                        lockIcon.parentNode.insertBefore(link, lockIcon);
+                        link.appendChild(lockIcon);
+                    }
+                }
+            };
+            xhr.send();
+        }
+    </script>
+  </body>
+</html>
