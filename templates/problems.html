@@ -54,12 +54,22 @@
     <script>
         function changeAllBackgroundColor (){
             let refreshIcons = document.querySelectorAll(".fa-refresh");
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                    changeBackgroundColor(entry.target);
+                    }
+                });
+            });
             for (let i = 1; i < refreshIcons.length; i++) {
                 let icon = refreshIcons[i];
-                changeBackgroundColor(icon);
+                observer.observe(icon);
             }
         }
         function changeBackgroundColor(element) {
+            if(element.parentNode.parentNode.classList.contains("true-content")) {
+                return;   
+            }
             var questionId = element.parentNode.parentNode.firstChild.textContent;
             questionId = parseInt(questionId)
             var xhr = new XMLHttpRequest();
@@ -68,9 +78,16 @@
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     var response = JSON.parse(xhr.responseText);
                     if(response['status'] === 'ac') {
-                        element.parentNode.parentNode.classList.toggle("true-content");
+                        if(element.parentNode.parentNode.classList.contains("false-content")) {
+                            element.parentNode.parentNode.classList.remove("false-content");   
+                        }
+                        if(!element.parentNode.parentNode.classList.contains("true-content")) {
+                            element.parentNode.parentNode.classList.toggle("true-content");   
+                        }
                     } else {
-                        element.parentNode.parentNode.classList.toggle("false-content");
+                        if(!element.parentNode.parentNode.classList.contains("false-content")) {
+                            element.parentNode.parentNode.classList.toggle("false-content");   
+                        }
                     }
                     if(response['paidOnly'] === true) {
                         var lockIcon = element.parentNode.getElementsByClassName("lock-icon")[0];
