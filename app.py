@@ -96,7 +96,7 @@ def change_status(questionId):
     response = get_status(questionId - 1)
     response['status'] = 'ac' if response['status'] is None else None 
     add_question(questionId - 1, response['title'], 1 if response['status'] == 'ac' else 0, 1 if response['paidOnly'] else 0)
-    return get_status(int(questionId) - 1)
+    return {'status': 'ok'}
 
 @app.route("/problem/<questionId>")
 def get_problem_detail(questionId):
