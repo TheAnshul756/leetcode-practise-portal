@@ -18,7 +18,7 @@ def get_db_connection():
     return conn
 
 def create_db():
-    print("creating database...")
+    print("creating table...")
     conn = get_db_connection()
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS questions (
