@@ -99,7 +99,6 @@
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     var response = JSON.parse(xhr.responseText);
-                    console.log(element.parentNode.parentNode)
                     if(response['status'] === 'ac') {
                         if(element.parentNode.parentNode.classList.contains("false-content")) {
                             element.parentNode.parentNode.classList.remove("false-content");   
@@ -123,7 +122,6 @@
                         lockIcon.parentNode.insertBefore(link, lockIcon);
                         link.appendChild(lockIcon);
                         var statusIcon = element.parentNode.getElementsByClassName("status-icon")[0];
-                        console.log(statusIcon.classList)
                         if(response['status'] == 'ac') {
                             if(statusIcon.classList.contains('fa-check')) {
                                 statusIcon.classList.remove('fa-check')

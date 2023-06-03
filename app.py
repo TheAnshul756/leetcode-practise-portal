@@ -42,7 +42,7 @@ def add_question(problemId, title, isSolved, isLocked):
         conn.commit()
         print("Question added successfully")
     else:
-        c.execute("UPDATE questions SET title = ?, isSolved=?, isLocked=? WHERE problemId=?", (isSolved, title, isLocked, problemId))
+        c.execute("UPDATE questions SET title = ?, isSolved=?, isLocked=? WHERE problemId=?", (title, isSolved, isLocked, problemId))
         conn.commit()
         print("Question updated successfully")
     conn.close()
@@ -66,7 +66,7 @@ def list_companies():
 
 def get_status(num):
     que = get_question_from_datbase(num)
-    if que:
+    if que and (que[4] == 1 or que[3] == 1):
         return {
             'title' : que[2],
             'status' : 'ac' if que[3] == 1 else None,
@@ -100,6 +100,10 @@ def change_status(questionId):
 
 @app.route("/problem/<questionId>")
 def get_problem_detail(questionId):
+    try:
+        questionId = int(questionId)
+    except:
+        return 'question id is wrong', 400
     return get_status(int(questionId) - 1)
 
 @app.route("/company/<name>")
