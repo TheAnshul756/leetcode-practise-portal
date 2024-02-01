@@ -83,7 +83,7 @@ def get_status(num):
     })
     headers = {
         'Content-Type': 'application/json',
-        'Cookie': cookieData
+        'x-csrftoken': cookieData
     }
     response = requests.request("POST", graphql_url, headers=headers, data=payload).json()
     response = response['data']['problemsetQuestionList']['questions']
@@ -115,4 +115,4 @@ def show_content(name):
 
 if __name__ == "__main__":
     create_db()
-    app.run()
+    app.run(host='0.0.0.0', port=3000)
