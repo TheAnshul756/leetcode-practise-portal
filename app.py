@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 import sqlite3
 import os
 import csv
@@ -75,7 +75,7 @@ def get_status(num):
     payload = json.dumps({
         "query": "\n    query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {\n  problemsetQuestionList: questionList(\n    categorySlug: $categorySlug\n    limit: $limit\n    skip: $skip\n    filters: $filters\n  ) {\n    total: totalNum\n    questions: data {\n      acRate\n      difficulty\n      freqBar\n      frontendQuestionId: questionFrontendId\n      isFavor\n      paidOnly: isPaidOnly\n      status\n      title\n      titleSlug\n      topicTags {\n        name\n        id\n        slug\n      }\n      hasSolution\n      hasVideoSolution\n    }\n  }\n}\n    ",
         "variables": {
-            "categorySlug": "",
+            "categorySlug": "all-code-essentials",
             "skip": num,
             "limit": 1,
             "filters": {}
@@ -83,12 +83,36 @@ def get_status(num):
     })
     headers = {
         'Content-Type': 'application/json',
-        'x-csrftoken': cookieData
+        'cookie': cookieData
     }
     response = requests.request("POST", graphql_url, headers=headers, data=payload).json()
     response = response['data']['problemsetQuestionList']['questions']
     add_question(num, response[0]['title'], 1 if response[0]['status'] == 'ac' else 0, 1 if response[0]['paidOnly'] else 0)
     return response[0]
+
+@app.route("/daily", methods=['GET', 'POST'])
+def daily_questions():
+    if request.method == 'GET':
+        return render_template("daily.html")
+    year = request.form.get('year')
+    month = request.form.get('month')
+    payload = json.dumps({
+            "query": "\n    query dailyCodingQuestionRecords($year: Int!, $month: Int!) {\n  dailyCodingChallengeV2(year: $year, month: $month) {\n    challenges {\n      date\n      userStatus\n      link\n      question {\n        questionFrontendId\n        title\n        titleSlug\n      }\n    }\n    weeklyChallenges {\n      date\n      userStatus\n      link\n      question {\n        questionFrontendId\n        title\n        titleSlug\n        isPaidOnly\n      }\n    }\n  }\n}\n    ",
+            "variables": {
+                "year": year,
+                "month": month
+            }
+        })
+    headers = {
+        'Content-Type': 'application/json',
+        'cookie': cookieData
+    }
+    try:
+        response = requests.request("POST", graphql_url, headers=headers, data=payload).json()
+    except:
+        return 'Something went wrong', 400
+    questions = response['data']['dailyCodingChallengeV2']
+    return render_template("daily.html", contents=questions['challenges'], weekly=questions['weeklyChallenges'])
 
 @app.route("/problemChangeStatus/<questionId>")
 def change_status(questionId):

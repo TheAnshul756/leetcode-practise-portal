@@ -1,0 +1,178 @@
+<html>
+    <head>
+        <title>Daily Challenges</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <style>
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            th, td {
+                border: 1px solid #dddddd;
+                padding: 8px;
+                text-align: left;
+            }
+            th {
+                background-color: #f2f2f2;
+            }
+            td a + i {
+                padding-left: 2em;
+                }
+            td i + i {
+                padding-left: 2em;
+                }
+            .true-content {
+                background-color: rgb(0, 255, 0);
+            }
+            .false-content {
+                background-color: rgb(250, 228, 65);
+            }
+            .lock-icon {
+                cursor: pointer;
+                display: none;
+            }
+            .status-icon {
+                cursor: pointer;
+            }
+            .refresh-icon {
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <form id="dailyForm" action="/daily" method="POST">
+        <label for="year">Year:</label>
+        <input type="number" id="year" name="year" min="1900" max="2100" required>
+
+        <label for="month">Month:</label>
+        <input type="number" id="month" name="month" min="1" max="12" required>
+
+        <button type="submit">Submit</button>
+    </form>
+    <body>
+        <table>
+            <tr>
+                <th>No.</th>
+                <th>Date</th>
+                <th>Name</th>
+                <th>Status &nbsp; <i class="refresh-icon fa fa-refresh" onclick="changeAllBackgroundColor()"></i></th>
+            </tr>
+            {% for content in contents %}
+            <tr>
+                <td>{{ content['question']['questionFrontendId'] }}</td>
+                <td>{{ content['date'] }}</td>
+                <td><a href="https://leetcode.com{{ content['link'] }}" target="_blank">{{ content['question']['title'] }}</a></td>
+                <td><i class="lock-icon fa fa-lock"></i> <i class=" refresh-icon fa fa-refresh" onclick="changeBackgroundColor(this)"></i> <i class="status-icon" onclick="changeStatus(this)"></i></td>
+            </tr>
+            {% endfor %}
+            {% for content in weekly %}
+            <tr>
+                <td>{{ content['question']['questionFrontendId'] }}</td>
+                <td>{{ content['date'] }}</td>
+                <td><a href="https://leetcode.com{{ content['link'] }}" target="_blank">{{ content['question']['title'] }}</a></td>
+                <td><i class="lock-icon fa fa-lock"></i> <i class=" refresh-icon fa fa-refresh" onclick="changeBackgroundColor(this)"></i> <i class="status-icon" onclick="changeStatus(this)"></i></td>
+            </tr>
+            {% endfor %}
+        </table>
+        <script>
+            window.onload = function() {
+                // Get the form element
+                const form = document.getElementById('dailyForm');
+
+                // Set the values for year and month
+                const yearInput = form.querySelector('#year');
+                const monthInput = form.querySelector('#month');
+                yearInput.value = new Date().getFullYear();
+                monthInput.value = new Date().getMonth() + 1;
+            };
+            function changeAllBackgroundColor (){
+                let refreshIcons = document.querySelectorAll(".fa-refresh");
+                const observer = new IntersectionObserver(entries => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                        changeBackgroundColor(entry.target);
+                        }
+                    });
+                });
+                for (let i = 1; i < refreshIcons.length; i++) {
+                    let icon = refreshIcons[i];
+                    observer.observe(icon);
+                }
+            }
+            function changeStatus(element) {
+                var questionId = element.parentNode.parentNode.firstChild.textContent;
+                    questionId = parseInt(questionId)
+                    var xhr = new XMLHttpRequest();
+                    console.log('changing status')
+                    xhr.open("GET", "{{ url_for('change_status', questionId=questionId) }}" + questionId, true);
+                    xhr.onreadystatechange = function() {
+                        if (xhr.readyState === 4 && xhr.status === 200) {
+                            changeBackgroundColor(element)
+                        }
+                    };
+                    xhr.send();
+            }
+            function changeBackgroundColor(element) {
+                // if(element.parentNode.parentNode.classList.contains("true-content")) {
+                //     return;   
+                // }
+                    
+                var questionId = element.parentNode.parentNode.firstElementChild.textContent;
+                questionId = parseInt(questionId)
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", "{{ url_for('get_problem_detail', questionId=questionId) }}" + questionId, true);
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        console.log(response)
+                        if(response['status'] === 'ac') {
+                            if(element.parentNode.parentNode.classList.contains("false-content")) {
+                                element.parentNode.parentNode.classList.remove("false-content");   
+                            }
+                            if(!element.parentNode.parentNode.classList.contains("true-content")) {
+                                element.parentNode.parentNode.classList.toggle("true-content");   
+                            }
+                        } else {
+                            if(!element.parentNode.parentNode.classList.contains("false-content")) {
+                                element.parentNode.parentNode.classList.toggle("false-content");   
+                            }
+                        }
+                        if(response['paidOnly'] === true) {
+                            var lockIcon = element.parentNode.getElementsByClassName("lock-icon")[0];
+                            lockIcon.style.display = "inline";
+                            var link = document.createElement("a");
+                            var title = response['title']
+                            title = title.replace(/\s/g, '+');
+                            link.href = 'https://google.com/search?q=' + title + '+lintcode';
+                            link.target = "_blank";
+                            lockIcon.parentNode.insertBefore(link, lockIcon);
+                            link.appendChild(lockIcon);
+                            var statusIcon = element.parentNode.getElementsByClassName("status-icon")[0];
+                            if(response['status'] == 'ac') {
+                                if(statusIcon.classList.contains('fa-check')) {
+                                    statusIcon.classList.remove('fa-check')
+                                }
+                                if(!statusIcon.classList.contains('fa')) {
+                                    statusIcon.classList.add('fa');
+                                }
+                                if(!statusIcon.classList.contains('fa-close')) {
+                                    statusIcon.classList.add('fa-close');
+                                }
+                            } else {
+                                if(statusIcon.classList.contains('fa-close')) {
+                                    statusIcon.classList.remove('fa-close')
+                                }
+                                if(!statusIcon.classList.contains('fa')) {
+                                    statusIcon.classList.add('fa');
+                                }
+                                if(!statusIcon.classList.contains('fa-check')) {
+                                    statusIcon.classList.add('fa-check');
+                                }
+                            }
+                        }
+                    }
+                };
+                xhr.send();
+            }
+        </script>
+    </body>
+</html>
