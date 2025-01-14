@@ -4,13 +4,14 @@ import os
 import csv
 import requests
 import json
-
 app = Flask(__name__, template_folder='templates')
 
 graphql_url = "https://leetcode.com/graphql/"
 
-with open("cookies.txt", "r") as file:
-        cookieData = file.readline()
+cookieData = os.getenv("COOKIE")
+if cookieData == "":
+    sys.exit(1)
+print(cookieData)
 
 def get_db_connection():
     conn = sqlite3.connect('questions.db')
@@ -72,6 +73,7 @@ def get_status(num):
             'status' : 'ac' if que[3] == 1 else None,
             'paidOnly' : True if que[4] == 1 else False,
         }
+
     payload = json.dumps({
         "query": "\n    query problemsetQuestionList($categorySlug: String, $limit: Int, $skip: Int, $filters: QuestionListFilterInput) {\n  problemsetQuestionList: questionList(\n    categorySlug: $categorySlug\n    limit: $limit\n    skip: $skip\n    filters: $filters\n  ) {\n    total: totalNum\n    questions: data {\n      acRate\n      difficulty\n      freqBar\n      frontendQuestionId: questionFrontendId\n      isFavor\n      paidOnly: isPaidOnly\n      status\n      title\n      titleSlug\n      topicTags {\n        name\n        id\n        slug\n      }\n      hasSolution\n      hasVideoSolution\n    }\n  }\n}\n    ",
         "variables": {
